@@ -209,7 +209,6 @@ namespace CodeRaider
         {
             UndoAttempt();
         }
-
         #endregion
 
         protected void OnPropertyChanged([CallerMemberName] string? name = null)
