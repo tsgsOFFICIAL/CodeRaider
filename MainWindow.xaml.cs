@@ -39,7 +39,7 @@ namespace CodeRaider
             }
         }
 
-        // Current logical index in the full list (your personal progress)
+        // Current logical index in the full list
         private int _myIndex = 0;
 
         // Binding Properties (now respect raiders + position)
