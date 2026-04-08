@@ -1,5 +1,6 @@
 ﻿using System.Runtime.CompilerServices;
 using System.Windows.Media.Animation;
+using System.Windows.Controls;
 using System.ComponentModel;
 using System.Windows.Input;
 using System.Windows.Media;
@@ -11,19 +12,46 @@ namespace CodeRaider
     {
         public event PropertyChangedEventHandler? PropertyChanged;
 
-        // Current index in the Helper.Codes array
-        private int _currentIndex = 0;
+        // Raider settings
+        private int _raiders = 1;
+        private int _myPosition = 0;
 
-        // Binding Properties
-        public string Prev3 => GetCodeAt(_currentIndex - 3);
-        public string Prev2 => GetCodeAt(_currentIndex - 2);
-        public string Prev1 => GetCodeAt(_currentIndex - 1);
-        public string Current => GetCodeAt(_currentIndex);
-        public string Next1 => GetCodeAt(_currentIndex + 1);
-        public string Next2 => GetCodeAt(_currentIndex + 2);
-        public string Next3 => GetCodeAt(_currentIndex + 3);
+        public int Raiders
+        {
+            get => _raiders;
+            set
+            {
+                _raiders = Math.Max(1, value);
+                OnPropertyChanged();
+                RefreshAllProperties();
+                UpdatePositionComboBox();
+            }
+        }
 
-        private string _hotkey = "F8";
+        public int MyPosition
+        {
+            get => _myPosition;
+            set
+            {
+                _myPosition = Math.Clamp(value, 0, _raiders - 1);
+                OnPropertyChanged();
+                RefreshAllProperties();
+            }
+        }
+
+        // Current logical index in the full list (your personal progress)
+        private int _myIndex = 0;
+
+        // Binding Properties (now respect raiders + position)
+        public string Prev3 => GetPersonalCodeAt(_myIndex - 3);
+        public string Prev2 => GetPersonalCodeAt(_myIndex - 2);
+        public string Prev1 => GetPersonalCodeAt(_myIndex - 1);
+        public string Current => GetPersonalCodeAt(_myIndex);
+        public string Next1 => GetPersonalCodeAt(_myIndex + 1);
+        public string Next2 => GetPersonalCodeAt(_myIndex + 2);
+        public string Next3 => GetPersonalCodeAt(_myIndex + 3);
+
+        private string _hotkey = "E";
         public string Hotkey
         {
             get => _hotkey;
@@ -41,21 +69,56 @@ namespace CodeRaider
             InitializeComponent();
             DataContext = this;
 
-            // Ensure the UI shows the first set of codes on launch
-            RefreshAllProperties();
+            Loaded += OnWindowLoaded;
 
             KeyDown += MainWindow_KeyDown;
         }
 
-        /// <summary>
-        /// Safely fetches a code from the helper array or returns placeholders
-        /// </summary>
-        private static string GetCodeAt(int index)
+        private void OnWindowLoaded(object sender, RoutedEventArgs e)
         {
-            if (index < 0 || index >= Helper.Codes.Length)
+            // Populate Raiders (1 to 20)
+            cmbRaiders.Items.Clear();
+
+            for (int i = 1; i <= 20; i++)
+                cmbRaiders.Items.Add(new ComboBoxItem
+                {
+                    Content = i.ToString()
+                });
+
+            cmbRaiders.SelectedIndex = 0; // start with 1 raider
+
+            UpdatePositionComboBox();
+
+            cmbRaiders.SelectedIndex = 0; // Default to 1 raider
+            UpdatePositionComboBox();
+
+            // Ensure the UI shows the first set of codes on launch
+            RefreshAllProperties();
+        }
+
+        private void UpdatePositionComboBox()
+        {
+            if (!IsLoaded)
+                return;
+
+            cmbPosition.Items.Clear();
+            for (int i = 0; i < _raiders; i++)
+            {
+                cmbPosition.Items.Add(new ComboBoxItem { Content = i.ToString() });
+            }
+            cmbPosition.SelectedIndex = Math.Min(_myPosition, _raiders - 1);
+        }
+
+        private string GetPersonalCodeAt(int personalIndex)
+        {
+            if (personalIndex < 0) return "----";
+
+            int globalIndex = _myPosition + (personalIndex * _raiders);
+
+            if (globalIndex < 0 || globalIndex >= Helper.Codes.Length)
                 return "----";
 
-            return Helper.Codes[index].ToString("D4");
+            return Helper.Codes[globalIndex].ToString("D4");
         }
 
         private void RefreshAllProperties()
@@ -66,26 +129,24 @@ namespace CodeRaider
 
         private void PerformNewAttempt()
         {
-            if (_currentIndex >= Helper.Codes.Length - 1)
+            // Check if we have more codes for this raider
+            int nextGlobal = _myPosition + ((_myIndex + 1) * _raiders);
+            if (nextGlobal >= Helper.Codes.Length)
                 return;
 
-            _currentIndex++;
+            _myIndex++;
             RefreshAllProperties();
-
-            // Play animation from the RIGHT (100) to 0
-            PlayScrollAnimation(100);
+            PlayScrollAnimation(100);   // slide in from right
         }
 
         private void UndoAttempt()
         {
-            if (_currentIndex <= 0)
+            if (_myIndex <= 0)
                 return;
 
-            _currentIndex--;
+            _myIndex--;
             RefreshAllProperties();
-
-            // Play animation from the LEFT (-100) to 0
-            PlayScrollAnimation(-100);
+            PlayScrollAnimation(-100);  // slide in from left
         }
 
         private void PlayScrollAnimation(double startOffset)
@@ -105,6 +166,22 @@ namespace CodeRaider
             }
         }
         #region Event Handlers
+        private void OnRaidersChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (cmbRaiders.SelectedItem is ComboBoxItem item && int.TryParse(item.Content.ToString(), out int r))
+            {
+                Raiders = r;
+            }
+        }
+
+        private void OnPositionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (cmbPosition.SelectedIndex >= 0)
+            {
+                MyPosition = cmbPosition.SelectedIndex;
+            }
+        }
+
         private void OnChangeHotkeyButtonClicked(object sender, RoutedEventArgs e)
         {
             isRecordingHotkey = true;

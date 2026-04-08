@@ -3,41 +3,18 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        xmlns:local="clr-namespace:CodeRaider"
         mc:Ignorable="d"
-        Title="Code Raider" Height="360" Width="820"
+        Title="Rust Code Raider"
+        Height="420"
+        Width="820"
         Background="#0F0F14"
         Foreground="#E0E0FF"
         FontFamily="Segoe UI"
         WindowStartupLocation="CenterScreen"
         ResizeMode="CanMinimize">
 
-    <Window.Resources>
-        <Style TargetType="TextBlock">
-            <Setter Property="FontWeight" Value="SemiBold"/>
-            <Setter Property="VerticalAlignment" Value="Center"/>
-            <Setter Property="HorizontalAlignment" Value="Center"/>
-            <Setter Property="FontFamily" Value="Consolas"/>
-        </Style>
 
-        <Style TargetType="Button">
-            <Setter Property="Background" Value="#1E1E2E"/>
-            <Setter Property="Foreground" Value="#A0A0FF"/>
-            <Setter Property="BorderThickness" Value="1"/>
-            <Setter Property="BorderBrush" Value="#4A4A7A"/>
-            <Setter Property="Padding" Value="14,9"/>
-            <Setter Property="FontSize" Value="13.5"/>
-            <Setter Property="Cursor" Value="Hand"/>
-            <Style.Triggers>
-                <Trigger Property="IsMouseOver" Value="True">
-                    <Setter Property="Background" Value="#2A2A44"/>
-                    <Setter Property="Foreground" Value="#C0C0FF"/>
-                </Trigger>
-            </Style.Triggers>
-        </Style>
-    </Window.Resources>
-
-    <Grid Margin="24">
+    <Grid Margin="28">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
@@ -45,13 +22,19 @@
         </Grid.RowDefinitions>
 
         <!-- Header -->
-        <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,0,0,24">
+        <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,0,0,28">
             <TextBlock Text="RUST CODE RAIDER" FontSize="29" FontWeight="Bold" Foreground="#7B7BFF"/>
             <TextBlock Text=" • tsgsOFFICIAL" Margin="14,4,0,0" FontSize="18" Foreground="#555577"/>
         </StackPanel>
 
         <!-- Code Display -->
-        <Border Grid.Row="1" Background="#181824" CornerRadius="14" BorderBrush="#2A2A44" BorderThickness="1" ClipToBounds="True">
+        <Border Grid.Row="1"
+                Background="#181824"
+                CornerRadius="16"
+                BorderBrush="#2A2A44"
+                BorderThickness="1"
+                Padding="20"
+                ClipToBounds="True">
             <Border.OpacityMask>
                 <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
                     <GradientStop Color="Transparent" Offset="0"/>
@@ -60,43 +43,94 @@
                     <GradientStop Color="Transparent" Offset="1"/>
                 </LinearGradientBrush>
             </Border.OpacityMask>
-
             <StackPanel x:Name="CodeStack" Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
                 <StackPanel.RenderTransform>
                     <TranslateTransform X="0"/>
                 </StackPanel.RenderTransform>
-
-                <TextBlock Text="{Binding Prev3}" FontSize="18" Foreground="#444466" Width="80" Opacity="0.3"/>
-                <TextBlock Text="{Binding Prev2}" FontSize="23" Foreground="#666688" Width="92" Margin="0,0,12,0"/>
-                <TextBlock Text="{Binding Prev1}" FontSize="28" Foreground="#8888AA" Width="104" Margin="0,0,40,0"/>
-
-                <Border Background="#1E1E2E" CornerRadius="12" Padding="32,18" BorderBrush="#5E5EFF" BorderThickness="2.5">
-                    <TextBlock Text="{Binding Current}" FontSize="58" FontWeight="Bold" Foreground="#FFFFFF" Margin="8,0"/>
+                <TextBlock Text="{Binding Prev3}" FontSize="18" Foreground="#444466" Width="82" Opacity="0.35" Margin="0,0,8,0"/>
+                <TextBlock Text="{Binding Prev2}" FontSize="23" Foreground="#666688" Width="94" Margin="0,0,16,0"/>
+                <TextBlock Text="{Binding Prev1}" FontSize="28" Foreground="#8888AA" Width="106" Margin="0,0,48,0"/>
+                <Border Background="#1E1E2E" CornerRadius="14" Padding="36,22" BorderBrush="#5E5EFF" BorderThickness="3">
+                    <TextBlock Text="{Binding Current}" FontSize="62" FontWeight="Bold" Foreground="#FFFFFF" Margin="12,0"/>
                 </Border>
-
-                <TextBlock Text="{Binding Next1}" FontSize="28" Foreground="#8888AA" Width="104" Margin="40,0,12,0"/>
-                <TextBlock Text="{Binding Next2}" FontSize="23" Foreground="#666688" Width="92"/>
-                <TextBlock Text="{Binding Next3}" FontSize="18" Foreground="#444466" Width="80" Opacity="0.3" Margin="12,0,0,0"/>
+                <TextBlock Text="{Binding Next1}" FontSize="28" Foreground="#8888AA" Width="106" Margin="48,0,16,0"/>
+                <TextBlock Text="{Binding Next2}" FontSize="23" Foreground="#666688" Width="94" Margin="0,0,8,0"/>
+                <TextBlock Text="{Binding Next3}" FontSize="18" Foreground="#444466" Width="82" Opacity="0.35"/>
             </StackPanel>
         </Border>
 
         <!-- Bottom Controls -->
-        <Grid Grid.Row="2" Margin="0,28,0,0">
+        <Grid Grid.Row="2" Margin="0,32,0,0">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="10"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
             <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="Auto"/>
                 <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
                 <ColumnDefinition Width="Auto"/>
                 <ColumnDefinition Width="Auto"/>
             </Grid.ColumnDefinitions>
 
+            <!-- Raiders -->
+            <TextBlock Text="Raiders:" 
+                       FontSize="14.5" 
+                       Foreground="#777799" 
+                       Margin="0,0,10,0" 
+                       VerticalAlignment="Center"/>
+            <ComboBox x:Name="cmbRaiders" 
+                      Width="90" 
+                      Grid.Column="1" 
+                      Margin="0,0,40,0" 
+                      SelectionChanged="OnRaidersChanged"/>
+
+            <!-- My Position -->
+            <TextBlock Text="My Position:" 
+                       FontSize="14.5" 
+                       Foreground="#777799" 
+                       Grid.Column="2" 
+                       Margin="0,0,10,0" 
+                       VerticalAlignment="Center"/>
+            <ComboBox x:Name="cmbPosition" 
+                      Width="90" 
+                      Grid.Column="3" 
+                      Margin="0,0,50,0" 
+                      SelectionChanged="OnPositionChanged"/>
+
             <!-- Hotkey -->
-            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                <TextBlock Text="Hotkey:" FontSize="14.5" Foreground="#777799" Margin="0,0,10,0"/>
-                <TextBlock Text="{Binding Hotkey}" FontSize="19" Foreground="#A0A0FF" FontWeight="SemiBold"/>
+            <StackPanel Orientation="Horizontal" 
+                        Grid.Column="0" 
+                        Grid.Row="2" 
+                        VerticalAlignment="Center" 
+                        Margin="0,0,20,0">
+                <TextBlock Text="Hotkey:" 
+                           FontSize="14.5" 
+                           Foreground="#777799" 
+                           Margin="0,0,10,0"/>
+                <TextBlock Text="{Binding Hotkey}" 
+                           FontSize="19" 
+                           Foreground="#A0A0FF" 
+                           FontWeight="SemiBold"/>
             </StackPanel>
 
-            <Button Content="Change Hotkey" Grid.Column="1" Width="145" Margin="0,0,14,0" Click="OnChangeHotkeyButtonClicked"/>
+            <!-- Buttons -->
+            <Button Content="UNDO" 
+                    Grid.Column="7" 
+                    Width="110" 
+                    Margin="12,0,0,0" 
+                    Click="OnUndoButtonClicked" 
+                    Style="{StaticResource AccentButton}"/>
 
-            <Button Content="UNDO ATTEMPT" Grid.Column="2" Width="170" FontSize="15" Background="#4A4A9F" Foreground="White" Click="OnUndoButtonClicked"/>
+            <Button Content="Change Hotkey" 
+                    Grid.Column="5" 
+                    Grid.Row="2" 
+                    Width="150" 
+                    Margin="0,0,12,0" 
+                    Click="OnChangeHotkeyButtonClicked" 
+                    Style="{StaticResource SecondaryButton}"/>
         </Grid>
     </Grid>
 </Window>
