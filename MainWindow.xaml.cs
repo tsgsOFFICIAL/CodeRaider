@@ -104,7 +104,7 @@ namespace CodeRaider
             cmbPosition.Items.Clear();
             for (int i = 0; i < _raiders; i++)
             {
-                cmbPosition.Items.Add(new ComboBoxItem { Content = i.ToString() });
+                cmbPosition.Items.Add(new ComboBoxItem { Content = (i + 1).ToString() });
             }
             cmbPosition.SelectedIndex = Math.Min(_myPosition, _raiders - 1);
         }
@@ -177,9 +177,7 @@ namespace CodeRaider
         private void OnPositionChanged(object sender, SelectionChangedEventArgs e)
         {
             if (cmbPosition.SelectedIndex >= 0)
-            {
                 MyPosition = cmbPosition.SelectedIndex;
-            }
         }
 
         private void OnChangeHotkeyButtonClicked(object sender, RoutedEventArgs e)

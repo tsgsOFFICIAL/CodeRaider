@@ -69,9 +69,9 @@
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="Auto"/>
                 <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="Auto"/>
                 <ColumnDefinition Width="*"/>
-                <ColumnDefinition Width="Auto"/>
-                <ColumnDefinition Width="Auto"/>
                 <ColumnDefinition Width="Auto"/>
             </Grid.ColumnDefinitions>
 
@@ -80,6 +80,7 @@
                        FontSize="14.5" 
                        Foreground="#777799" 
                        Margin="0,0,10,0" 
+                       Grid.Column="0" 
                        VerticalAlignment="Center"/>
             <ComboBox x:Name="cmbRaiders" 
                       Width="90" 
@@ -101,20 +102,17 @@
                       SelectionChanged="OnPositionChanged"/>
 
             <!-- Hotkey -->
-            <StackPanel Orientation="Horizontal" 
-                        Grid.Column="0" 
-                        Grid.Row="2" 
-                        VerticalAlignment="Center" 
-                        Margin="0,0,20,0">
-                <TextBlock Text="Hotkey:" 
+            <TextBlock Text="Hotkey:" 
                            FontSize="14.5" 
                            Foreground="#777799" 
-                           Margin="0,0,10,0"/>
-                <TextBlock Text="{Binding Hotkey}" 
+                           Margin="0,0,10,0"
+                           Grid.Row="2" />
+            <TextBlock Text="{Binding Hotkey, FallbackValue='\{HOTKEY\}'}" 
                            FontSize="19" 
                            Foreground="#A0A0FF" 
-                           FontWeight="SemiBold"/>
-            </StackPanel>
+                           Grid.Column="1" 
+                           FontWeight="SemiBold"
+                           Grid.Row="2" />
 
             <!-- Buttons -->
             <Button Content="UNDO" 
