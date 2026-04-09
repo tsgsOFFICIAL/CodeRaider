@@ -107,7 +107,7 @@
                            Foreground="#777799" 
                            Margin="0,0,10,0"
                            Grid.Row="2" />
-            <TextBlock Text="{Binding Hotkey, FallbackValue='\{HOTKEY\}'}" 
+            <TextBlock Text="{Binding HotkeyString, FallbackValue='\{HOTKEY\}'}" 
                            FontSize="19" 
                            Foreground="#A0A0FF" 
                            Grid.Column="1" 

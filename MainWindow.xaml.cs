@@ -4,7 +4,11 @@ using System.Windows.Controls;
 using System.ComponentModel;
 using System.Windows.Input;
 using System.Windows.Media;
+using CodeRaider.Managers;
+using CodeRaider.Models;
+using System.IO.Pipes;
 using System.Windows;
+using System.IO;
 
 namespace CodeRaider
 {
@@ -51,18 +55,19 @@ namespace CodeRaider
         public string Next2 => GetPersonalCodeAt(_myIndex + 2);
         public string Next3 => GetPersonalCodeAt(_myIndex + 3);
 
-        private string _hotkey = "E";
-        public string Hotkey
+        private string _hotkeyString = "None";
+        public string HotkeyString
         {
-            get => _hotkey;
+            get => _hotkeyString;
             set
             {
-                _hotkey = value;
+                _hotkeyString = value;
                 OnPropertyChanged();
             }
         }
 
-        private bool isRecordingHotkey = false;
+        private bool _isReadingHotkey = false;
+        private Hotkey? oldHotkey = null;
 
         public MainWindow()
         {
@@ -71,29 +76,7 @@ namespace CodeRaider
 
             Loaded += OnWindowLoaded;
 
-            KeyDown += MainWindow_KeyDown;
-        }
-
-        private void OnWindowLoaded(object sender, RoutedEventArgs e)
-        {
-            // Populate Raiders (1 to 20)
-            cmbRaiders.Items.Clear();
-
-            for (int i = 1; i <= 20; i++)
-                cmbRaiders.Items.Add(new ComboBoxItem
-                {
-                    Content = i.ToString()
-                });
-
-            cmbRaiders.SelectedIndex = 0; // start with 1 raider
-
-            UpdatePositionComboBox();
-
-            cmbRaiders.SelectedIndex = 0; // Default to 1 raider
-            UpdatePositionComboBox();
-
-            // Ensure the UI shows the first set of codes on launch
-            RefreshAllProperties();
+            KeyDown += OnKeyDown;
         }
 
         private void UpdatePositionComboBox()
@@ -165,7 +148,118 @@ namespace CodeRaider
                 trans.BeginAnimation(TranslateTransform.XProperty, slideAnim);
             }
         }
+
+        /// <summary>
+        /// Brings the window to the foreground, restoring it if minimized and ensuring it is visible and active.
+        /// </summary>
+        /// <remarks>This method restores the window from a minimized state if necessary, makes it
+        /// visible, and activates it. It also adjusts the window's Z-order to ensure it appears above other windows,
+        /// addressing platform-specific behavior on Windows.</remarks>
+        private void BringToFront()
+        {
+            // Always ensure visible and focused
+            if (!IsVisible)
+                Show();
+
+            WindowState = WindowState.Normal; // In case it was maximized/minimized
+
+            Activate();
+            Topmost = true;
+            Topmost = false; // Focus steal fix
+        }
+        /// <summary>
+        /// Starts an asynchronous server that listens for activation messages on a named pipe and brings the
+        /// application window to the foreground when an activation request is received.
+        /// </summary>
+        /// <remarks>This method runs the activation server in a background task and does not block the
+        /// calling thread. The server continuously waits for incoming connections and responds to activation messages.
+        /// This is typically used to allow external processes to activate the application window. The method should be
+        /// called once during application startup to enable activation functionality.</remarks>
+        private void StartActivationServer()
+        {
+            Task.Run(async () =>
+            {
+                while (true)
+                {
+                    using NamedPipeServerStream server = new NamedPipeServerStream(
+                        App.PipeName,
+                        PipeDirection.In,
+                        1,
+                        PipeTransmissionMode.Message,
+                        PipeOptions.Asynchronous);
+
+                    await server.WaitForConnectionAsync();
+
+                    using StreamReader reader = new StreamReader(server);
+                    string? message = await reader.ReadLineAsync();
+
+                    if (message == "ACTIVATE")
+                    {
+                        Dispatcher.Invoke(BringToFront);
+                    }
+                }
+            });
+        }
+
+        private string GetHotkeyDisplayString(Hotkey? hotkey)
+        {
+            if (hotkey == null)
+                return "None";
+
+            string mods = "";
+            if (hotkey.Modifiers.HasFlag(ModifierKeys.Control)) mods += "Ctrl+";
+            if (hotkey.Modifiers.HasFlag(ModifierKeys.Shift)) mods += "Shift+";
+            if (hotkey.Modifiers.HasFlag(ModifierKeys.Alt)) mods += "Alt+";
+            if (hotkey.Modifiers.HasFlag(ModifierKeys.Windows)) mods += "Win+";
+
+            return mods + hotkey.Key;
+        }
+
+        private static bool IsModifierKey(Key key)
+        {
+            return key is Key.LeftCtrl or Key.RightCtrl or
+                   Key.LeftAlt or Key.RightAlt or
+                   Key.LeftShift or Key.RightShift or
+                   Key.LWin or Key.RWin or
+                   Key.System; // AltGr often appears as System
+        }
+
         #region Event Handlers
+        private void OnWindowLoaded(object sender, RoutedEventArgs e)
+        {
+            StartActivationServer();
+
+            // Populate Raiders (1 to 20)
+            cmbRaiders.Items.Clear();
+
+            for (int i = 1; i <= 20; i++)
+                cmbRaiders.Items.Add(new ComboBoxItem
+                {
+                    Content = i.ToString()
+                });
+
+            cmbRaiders.SelectedIndex = 0; // start with 1 raider
+
+            UpdatePositionComboBox();
+
+            cmbRaiders.SelectedIndex = 0; // Default to 1 raider
+            UpdatePositionComboBox();
+
+            App.Settings.NextHotkeyPressed += PerformNewAttempt;
+            App.Settings.NextHotkeyChanged += OnNextHotkeyChanged;
+
+            // Initial display
+            HotkeyString = GetHotkeyDisplayString(App.Settings.NextHotkey);
+
+            // Ensure the UI shows the first set of codes on launch
+            RefreshAllProperties();
+        }
+
+        private void OnNextHotkeyChanged()
+        {
+            HotkeyString = GetHotkeyDisplayString(App.Settings.NextHotkey);
+        }
+
         private void OnRaidersChanged(object sender, SelectionChangedEventArgs e)
         {
             if (cmbRaiders.SelectedItem is ComboBoxItem item && int.TryParse(item.Content.ToString(), out int r))
@@ -180,38 +274,53 @@ namespace CodeRaider
                 MyPosition = cmbPosition.SelectedIndex;
         }
 
-        private void OnChangeHotkeyButtonClicked(object sender, RoutedEventArgs e)
+        private async void OnChangeHotkeyButtonClicked(object sender, RoutedEventArgs e)
         {
-            isRecordingHotkey = true;
-            Hotkey = "[Press key]";
+            _isReadingHotkey = true;
+
+            // Save old hotkey in case user cancels
+            oldHotkey = App.Settings.NextHotkey;
+
+            // Set hotkey to null to avoid conflicts while dialog is open
+            App.Settings.SetNextHotkey(Key.None, ModifierKeys.None);
+
+            HotkeyString = "[Press key]";
         }
 
-        private void MainWindow_KeyDown(object sender, KeyEventArgs e)
+        private async void OnKeyDown(object sender, KeyEventArgs e)
         {
-            if (isRecordingHotkey)
+            if (!_isReadingHotkey)
+                return;
+
+            // Ignore modifier keys by themselves (Ctrl, Alt, Shift, etc.)
+            if (IsModifierKey(e.Key))
+                return;
+
+            // Escape cancels hotkey change
+            if (e.Key == Key.Escape)
             {
-                Hotkey = e.Key.ToString().Replace("D", "").Replace("NumPad", "");
-                isRecordingHotkey = false;
+                App.Settings.SetNextHotkey(oldHotkey?.Key ?? Key.None, oldHotkey?.Modifiers ?? ModifierKeys.None);
+                _isReadingHotkey = false;
                 return;
             }
 
-            // Logic to check if the pressed key matches the hotkey string
-            string pressed = e.Key.ToString();
-            if (pressed == Hotkey || pressed == $"D{Hotkey}" || pressed == $"NumPad{Hotkey}")
-            {
-                PerformNewAttempt();
-            }
+            _isReadingHotkey = false;
+
+            ModifierKeys modifiers = Keyboard.Modifiers;
+
+            App.Settings.SetNextHotkey(e.Key, modifiers);
+            await SettingsService.SaveAsync(App.Settings.NextHotkey);
         }
 
         private void OnUndoButtonClicked(object sender, RoutedEventArgs e)
         {
             UndoAttempt();
         }
-        #endregion
 
         protected void OnPropertyChanged([CallerMemberName] string? name = null)
         {
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
         }
+        #endregion
     }
 }
