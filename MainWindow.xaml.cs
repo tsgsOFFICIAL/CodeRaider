@@ -15,6 +15,7 @@ namespace CodeRaider
     public partial class MainWindow : Window, INotifyPropertyChanged
     {
         public event PropertyChangedEventHandler? PropertyChanged;
+        private KeyboardService _keyboard = new();
 
         // Raider settings
         private int _raiders = 1;
@@ -26,9 +27,11 @@ namespace CodeRaider
             set
             {
                 _raiders = Math.Max(1, value);
+                _myIndex = 0;
                 OnPropertyChanged();
                 RefreshAllProperties();
                 UpdatePositionComboBox();
+                UpdateProgressString();
             }
         }
 
@@ -38,8 +41,10 @@ namespace CodeRaider
             set
             {
                 _myPosition = Math.Clamp(value, 0, _raiders - 1);
+                _myIndex = 0;
                 OnPropertyChanged();
                 RefreshAllProperties();
+                UpdateProgressString();
             }
         }
 
@@ -65,6 +70,19 @@ namespace CodeRaider
                 OnPropertyChanged();
             }
         }
+
+        private string? _progressString = "0 / 10.000 (0%)";
+
+        public string? ProgressString
+        {
+            get => _progressString;
+            set
+            {
+                _progressString = value;
+                OnPropertyChanged();
+            }
+        }
+
 
         private bool _isReadingHotkey = false;
         private Hotkey? oldHotkey = null;
@@ -112,14 +130,49 @@ namespace CodeRaider
 
         private void PerformNewAttempt()
         {
+            WriteCode();
+
             // Check if we have more codes for this raider
             int nextGlobal = _myPosition + ((_myIndex + 1) * _raiders);
             if (nextGlobal >= Helper.Codes.Length)
                 return;
 
             _myIndex++;
+
+            // Update progress
+            UpdateProgressString();
+
             RefreshAllProperties();
             PlayScrollAnimation(100);   // slide in from right
+        }
+
+        private void WriteCode()
+        {
+            _keyboard.Write(Current, 100);
+        }
+
+        private void UpdateProgressString()
+        {
+            if (Helper.Codes == null || Helper.Codes.Length == 0)
+            {
+                ProgressString = "0 / 0 (0%)";
+                return;
+            }
+
+            int totalCodes = Helper.Codes.Length;
+            int currentGlobalIndex = _myPosition + (_myIndex * _raiders);
+
+            // How many attempts this raider has already done (including current)
+            int attemptsDone = _myIndex + 1;
+
+            // Total attempts this raider will need to do
+            int totalAttemptsForRaider = (int)Math.Ceiling((double)totalCodes / _raiders);
+
+            double percentage = totalAttemptsForRaider > 0
+                ? (attemptsDone * 100.0) / totalAttemptsForRaider
+                : 0;
+
+            ProgressString = $"{attemptsDone} / {totalAttemptsForRaider:0,0} ({percentage:0}%)";
         }
 
         private void UndoAttempt()
@@ -128,6 +181,10 @@ namespace CodeRaider
                 return;
 
             _myIndex--;
+
+            // Update progress
+            UpdateProgressString();
+
             RefreshAllProperties();
             PlayScrollAnimation(-100);  // slide in from left
         }
@@ -287,7 +344,7 @@ namespace CodeRaider
             HotkeyString = "[Press key]";
         }
 
-        private async void OnKeyDown(object sender, KeyEventArgs e)
+        private async void OnKeyDown(object sender, System.Windows.Input.KeyEventArgs e)
         {
             if (!_isReadingHotkey)
                 return;

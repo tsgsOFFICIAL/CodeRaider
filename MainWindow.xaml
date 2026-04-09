@@ -108,9 +108,15 @@
                            Margin="0,0,10,0"
                            Grid.Row="2" />
             <TextBlock Text="{Binding HotkeyString, FallbackValue='\{HOTKEY\}'}" 
-                           FontSize="19" 
+                           FontSize="20" 
                            Foreground="#A0A0FF" 
                            Grid.Column="1" 
+                           FontWeight="SemiBold"
+                           Grid.Row="2" />
+            <TextBlock Text="{Binding ProgressString, FallbackValue='\{PROGRESS\}'}" 
+                           FontSize="18" 
+                           Foreground="#A0A0FF" 
+                           Grid.Column="2" 
                            FontWeight="SemiBold"
                            Grid.Row="2" />
 

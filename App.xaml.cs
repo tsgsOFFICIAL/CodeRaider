@@ -1,5 +1,4 @@
 ﻿using System.Windows.Threading;
-using CodeRaider.Managers;
 using CodeRaider.Models;
 using System.IO.Pipes;
 using System.Windows;
@@ -7,7 +6,7 @@ using System.IO;
 
 namespace CodeRaider
 {
-    public partial class App : Application
+    public partial class App : System.Windows.Application
     {
         public static SettingsManager Settings { get; private set; } = new();
 
@@ -57,7 +56,7 @@ namespace CodeRaider
 
         private void OnDispatcherUnhandledException(object sender, DispatcherUnhandledExceptionEventArgs e)
         {
-            MessageBox.Show($"An undefined error has happened, please contact tsgsOFFICIAL to resolve this issue.\n\nInclude the following Error Message: {e.Exception.Message}", "Undefined Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            System.Windows.MessageBox.Show($"An undefined error has happened, please contact tsgsOFFICIAL to resolve this issue.\n\nInclude the following Error Message: {e.Exception.Message}", "Undefined Error", MessageBoxButton.OK, MessageBoxImage.Error);
 
             e.Handled = true; // Prevents the application from crashing
         }
@@ -66,7 +65,7 @@ namespace CodeRaider
         {
             if (e.ExceptionObject is Exception ex)
             {
-                MessageBox.Show($"A critical error has happened, please contact tsgsOFFICIAL to resolve this issue.\n\nInclude the following Error Message: {ex.Message}", "Critical Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                System.Windows.MessageBox.Show($"A critical error has happened, please contact tsgsOFFICIAL to resolve this issue.\n\nInclude the following Error Message: {ex.Message}", "Critical Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 
