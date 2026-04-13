@@ -119,6 +119,13 @@
                            Grid.Column="2" 
                            FontWeight="SemiBold"
                            Grid.Row="2" />
+            <TextBlock Text="{Binding TimerString, FallbackValue='\{TIMER\}'}" 
+                           FontSize="18" 
+                           Foreground="#A0A0FF" 
+                           Grid.Column="3"
+                           Margin="40,0,0,0"
+                           FontWeight="SemiBold"
+                           Grid.Row="2" />
 
             <!-- Buttons -->
             <Button Content="UNDO" 

@@ -5,6 +5,7 @@ using System.ComponentModel;
 using System.Windows.Input;
 using System.Windows.Media;
 using CodeRaider.Managers;
+using System.Diagnostics;
 using CodeRaider.Models;
 using System.IO.Pipes;
 using System.Windows;
@@ -16,6 +17,8 @@ namespace CodeRaider
     {
         public event PropertyChangedEventHandler? PropertyChanged;
         private KeyboardService _keyboard = new();
+        private Stopwatch _stopwatch = new();
+        private System.Timers.Timer _timer = new System.Timers.Timer(new TimeSpan(0, 0, 0, 0, 200));
 
         // Raider settings
         private int _raiders = 1;
@@ -83,6 +86,17 @@ namespace CodeRaider
             }
         }
 
+        private string? _timerString = "00:00:00";
+
+        public string? TimerString
+        {
+            get => _timerString;
+            set
+            {
+                _timerString = value;
+                OnPropertyChanged();
+            }
+        }
 
         private bool _isReadingHotkey = false;
         private Hotkey? oldHotkey = null;
@@ -93,8 +107,18 @@ namespace CodeRaider
             DataContext = this;
 
             Loaded += OnWindowLoaded;
-
             KeyDown += OnKeyDown;
+
+            _timer.Elapsed += (s, e) =>
+            {
+                if (!_stopwatch.IsRunning)
+                    _timer.Stop();
+
+                Dispatcher.Invoke(() =>
+                {
+                    TimerString = _stopwatch.Elapsed.ToString(@"hh\:mm\:ss");
+                });
+            };
         }
 
         private void UpdatePositionComboBox()
@@ -130,6 +154,12 @@ namespace CodeRaider
 
         private void PerformNewAttempt()
         {
+            if (!_stopwatch.IsRunning)
+            {
+                _stopwatch.Start();
+                _timer.Start();
+            }
+
             WriteCode();
 
             // Check if we have more codes for this raider
@@ -169,7 +199,7 @@ namespace CodeRaider
             int totalAttemptsForRaider = (int)Math.Ceiling((double)totalCodes / _raiders);
 
             double percentage = totalAttemptsForRaider > 0
-                ? (attemptsDone * 100.0) / totalAttemptsForRaider
+                ? attemptsDone * 100.0 / totalAttemptsForRaider
                 : 0;
 
             ProgressString = $"{attemptsDone} / {totalAttemptsForRaider:0,0} ({percentage:0}%)";
@@ -181,6 +211,9 @@ namespace CodeRaider
                 return;
 
             _myIndex--;
+
+            if (_myIndex == 0)
+                _stopwatch.Reset();
 
             // Update progress
             UpdateProgressString();
@@ -344,7 +377,7 @@ namespace CodeRaider
             HotkeyString = "[Press key]";
         }
 
-        private async void OnKeyDown(object sender, System.Windows.Input.KeyEventArgs e)
+        private async void OnKeyDown(object sender, KeyEventArgs e)
         {
             if (!_isReadingHotkey)
                 return;
